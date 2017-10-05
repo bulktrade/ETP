@@ -120,15 +120,10 @@ func (u *PayoutsProcessor) process() {
 		amount, _ := u.backend.GetBalance(login)
 		amountInShannon := big.NewInt(amount)
 		
-		ptresh, _ := u.backend.GetTreshold(login)
-		if ptresh <= 10 {
-			ptresh = u.config.Threshold
-		}
-
 		// Shannon^2 = Wei
 		amountInWei := new(big.Int).Mul(amountInShannon, util.Shannon)
 
-		if !u.reachedThreshold(amountInShannon, ptresh) {
+		if !u.reachedThreshold(amountInShannon) {
 			continue
 		}
 		mustPay++
@@ -248,8 +243,8 @@ func (self PayoutsProcessor) checkPeers() bool {
 	return true
 }
 
- func (self PayoutsProcessor) reachedThreshold(amount *big.Int, threshold int64) bool { 
-	 return big.NewInt(threshold).Cmp(amount) < 0
+func (self PayoutsProcessor) reachedThreshold(amount *big.Int) bool {
+	 return big.NewInt(self.config.Threshold).Cmp(amount) < 0
 }
 
 func formatPendingPayments(list []*storage.PendingPayment) string {
