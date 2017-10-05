@@ -6,7 +6,7 @@
           <strong>Open Ethereum Pool</strong>
         </h1>
         <strong>Min. payout threshold: {{config.PayoutThreshold}}</strong>, Payouts run twice per day.<br/>
-        <span class="label label-success">PROP</span> Stable and profitable pool with regular payouts.
+        <span class="label label-success">Score</span> Stable and profitable pool with regular payouts.
       </div>
       <div class="col-md-3 stats">
         <div><i class="fa fa-users"></i> Miners Online: <span id="poolHashrate">{{format-number stats.model.minersTotal}}</span></div>
@@ -42,7 +42,7 @@
   <div>
     <hr/>
     <h4 class="note note-info text-center">
-      ethminer.exe -F {{config.HttpHost}}:{{config.HttpPort}}/&lt;address&gt;/&lt;worker&gt; -G
+      ethdcrminer64 -epool stratum+tcp://{{config.StratumHost}}:{{config.StratumPort}} -ewal [YOUR_ETH_ADDRESS] -epsw x -eworker [RIG_ID]
     </h4>
   </div>
 </div>
