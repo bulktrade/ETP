@@ -82,7 +82,8 @@ type Worker struct {
 	TotalHR int64 `json:"hr2"`
 }
 
-var client *redis.Client
+func NewRedisClient(cfg *Config, prefix string) *RedisClient {
+	var client *redis.Client
 	if cfg.Network == "unix" {
 	    client = redis.NewClient(&redis.Options{
 		Dialer: func() (net.Conn, error) {
@@ -98,7 +99,7 @@ var client *redis.Client
 		Password: cfg.Password,
 		DB:       cfg.Database,
 		PoolSize: cfg.PoolSize,
-	})
+	    })
 	}
 	return &RedisClient{client: client, prefix: prefix}
 }
