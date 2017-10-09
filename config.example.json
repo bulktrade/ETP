@@ -12,6 +12,7 @@
 		"blockRefreshInterval": "120ms",
 		"stateUpdateInterval": "3s",
 		"difficulty": 2000000000,
+		"baseDifficulty": 2000000000,
 		"hashrateExpiration": "3h",
 
 		"healthCheck": true,
@@ -25,11 +26,11 @@
 		},
 		
 		"stratum_nice_hash": {
-+			"enabled": true,
-+			"listen": "0.0.0.0:9009",
-+			"timeout": "120s",
-+			"maxConn": 8192
-+		},
+			"enabled": true,
+			"listen": "0.0.0.0:9009",
+			"timeout": "120s",
+			"maxConn": 8192
+		},
 
 		"policy": {
 			"workers": 8,
@@ -81,7 +82,8 @@
 	],
 
 	"redis": {
-		"endpoint": "127.0.0.1:6379",
+		"network": "unix",
+		"endpoint": "/var/run/redis.sock",
 		"poolSize": 10,
 		"database": 0,
 		"password": ""
