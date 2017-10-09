@@ -81,7 +81,7 @@ export default Ember.Controller.extend({
       if (!percent) {
         return 1;
       }
-      return Math.exp(percent);
+      return Math.exp(2 * percent);
     }
   }),
 
