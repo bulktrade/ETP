@@ -7,6 +7,7 @@ import (
 	"strings"
 	"time"
 	"math"
+	"net"
 
 	"gopkg.in/redis.v3"
 
@@ -14,6 +15,7 @@ import (
 )
 
 type Config struct {
+	Network  string `json:"network"`
 	Endpoint string `json:"endpoint"`
 	Password string `json:"password"`
 	Database int64  `json:"database"`
@@ -80,13 +82,24 @@ type Worker struct {
 	TotalHR int64 `json:"hr2"`
 }
 
-func NewRedisClient(cfg *Config, prefix string) *RedisClient {
-	client := redis.NewClient(&redis.Options{
+var client *redis.Client
+	if cfg.Network == "unix" {
+	    client = redis.NewClient(&redis.Options{
+		Dialer: func() (net.Conn, error) {
+		    return net.DialTimeout("unix", cfg.Endpoint, 1*time.Second)
+		},
+		Password: cfg.Password,
+		DB:       cfg.Database,
+		PoolSize: cfg.PoolSize,
+	    })
+	} else {
+	    client = redis.NewClient(&redis.Options{
 		Addr:     cfg.Endpoint,
 		Password: cfg.Password,
 		DB:       cfg.Database,
 		PoolSize: cfg.PoolSize,
 	})
+	}
 	return &RedisClient{client: client, prefix: prefix}
 }
 
@@ -168,7 +181,7 @@ func (r *RedisClient) checkPoWExist(height uint64, params []string) (bool, error
 	return val == 0, err
 }
 
-func (r *RedisClient) GetShareScore(shareDiff int64, netDiff int64) int64 {
+func (r *RedisClient) GetShareScore(shareDiff int64, shareBaseDiff int64, netDiff int64) int64 {
 	tx := r.client.Multi()
 	defer tx.Close()
 
@@ -180,19 +193,19 @@ func (r *RedisClient) GetShareScore(shareDiff int64, netDiff int64) int64 {
 	if err != nil {
 	    // Fallback to proportional for now
 	    // TODO: panic
-	    return shareDiff
+	    return int64(float64(shareDiff) / float64(shareBaseDiff))
 	} else {
 	    // Share weight is calculated as diff * e^(cumulative_diff / network_diff)
 
 	    result, _ := cmds[0].(*redis.StringCmd).Result()
 	    roundShares, _ := strconv.ParseInt(result, 10, 64)
-	    ratio := math.Exp(float64(roundShares) / float64(netDiff))
+	    ratio := math.Exp(2 * float64(roundShares) / float64(netDiff))
 
-	    return int64(ratio * float64(shareDiff))
+	    return int64(ratio * float64(shareDiff) / float64(shareBaseDiff))
 	}
 }
 
-func (r *RedisClient) WriteShare(login, id string, params []string, diff int64, netdiff int64, height uint64, window time.Duration) (bool, error) {
+func (r *RedisClient) WriteShare(login, id string, params []string, diff int64, baseDiff int64, netdiff int64, height uint64, window time.Duration) (bool, error) {
 	exist, err := r.checkPoWExist(height, params)
 	if err != nil {
 		return false, err
@@ -207,7 +220,7 @@ func (r *RedisClient) WriteShare(login, id string, params []string, diff int64, 
 	ms := util.MakeTimestamp()
 	ts := ms / 1000
 
-	score := r.GetShareScore(diff, netdiff)
+	score := r.GetShareScore(diff, baseDiff, netdiff)
 
 	_, err = tx.Exec(func() error {
 		r.writeShare(tx, ms, ts, login, id, diff, score, window)
@@ -218,7 +231,7 @@ func (r *RedisClient) WriteShare(login, id string, params []string, diff int64, 
 	return false, err
 }
 
-func (r *RedisClient) WriteBlock(login, id string, params []string, diff, roundDiff int64, height uint64, window time.Duration) (bool, error) {
+func (r *RedisClient) WriteBlock(login, id string, params []string, diff int64, baseDiff int64, roundDiff int64, height uint64, window time.Duration) (bool, error) {
 	exist, err := r.checkPoWExist(height, params)
 	if err != nil {
 		return false, err
@@ -233,7 +246,7 @@ func (r *RedisClient) WriteBlock(login, id string, params []string, diff, roundD
 	ms := util.MakeTimestamp()
 	ts := ms / 1000
 
-	score := r.GetShareScore(diff, roundDiff)
+	score := r.GetShareScore(diff, baseDiff, roundDiff)
 
 	cmds, err := tx.Exec(func() error {
 		r.writeShare(tx, ms, ts, login, id, diff, score, window)
@@ -719,6 +732,7 @@ func (r *RedisClient) CollectStats(smallWindow time.Duration, maxBlocks, maxPaym
 		tx.ZCard(r.formatKey("blocks", "matured"))
 		tx.ZCard(r.formatKey("payments", "all"))
 		tx.ZRevRangeWithScores(r.formatKey("payments", "all"), 0, maxPayments-1)
+		tx.ZRevRangeWithScores(r.formatKey("finders"), 0, -1)
 		return nil
 	})
 
@@ -743,6 +757,9 @@ func (r *RedisClient) CollectStats(smallWindow time.Duration, maxBlocks, maxPaym
 	payments := convertPaymentsResults(cmds[10].(*redis.ZSliceCmd))
 	stats["payments"] = payments
 	stats["paymentsTotal"] = cmds[9].(*redis.IntCmd).Val()
+	
+	finders := convertFindersResults(cmds[11].(*redis.ZSliceCmd))
+	stats["finders"] = finders
 
 	totalHashrate, miners := convertMinersStats(window, cmds[1].(*redis.ZSliceCmd))
 	stats["miners"] = miners
@@ -1013,6 +1030,17 @@ func convertPaymentsResults(raw *redis.ZSliceCmd) []map[string]interface{} {
 			tx["amount"], _ = strconv.ParseInt(fields[2], 10, 64)
 		}
 		result = append(result, tx)
+	}
+	return result
+}
+
+func convertFindersResults(raw *redis.ZSliceCmd) []map[string]interface{} {
+	var result []map[string]interface{}
+	for _, v := range raw.Val() {
+		miner := make(map[string]interface{})
+		miner["blocks"] = int64(v.Score)
+		miner["address"] = v.Member.(string)
+		result = append(result, miner)
 	}
 	return result
 }
