@@ -205,13 +205,13 @@ func matchCandidate(block *rpc.GetBlockReply, candidate *storage.BlockData) bool
 
 func (u *BlockUnlocker) handleBlock(block *rpc.GetBlockReply, candidate *storage.BlockData) error {
 	// Initial 5 Ether static reward
-	reward := new(big.Int).Set(constReward)
+	reward := new(big.Int).Set(homesteadReward)
 
 	correctHeight, err := strconv.ParseInt(strings.Replace(block.Number, "0x", "", -1), 16, 64)
 	if err != nil {
 		return err
 	}
-	candidate.Height = correctHeight
+	candidate.Height := correctHeight
 	reward := getConstReward(candidate.Height)
 
 	// Add TX fees
