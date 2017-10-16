@@ -211,7 +211,7 @@ func (u *BlockUnlocker) handleBlock(block *rpc.GetBlockReply, candidate *storage
 	if err != nil {
 		return err
 	}
-	candidate.Height := correctHeight
+	candidate.Height = correctHeight
 	reward := getConstReward(candidate.Height)
 
 	// Add TX fees
