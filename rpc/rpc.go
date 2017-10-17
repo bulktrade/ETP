@@ -61,7 +61,7 @@ func (r *TxReceipt) Confirmed() bool {
 
 // Use with previous method
 func (r *TxReceipt) Successful() bool {
-	if len(r.Status) > 0 {
+	if r.Status < 2 {
 		return r.Status == receiptStatusSuccessful
 	}
 	return true
