@@ -46,13 +46,13 @@ type GetBlockReplyPart struct {
 	Difficulty string `json:"difficulty"`
 }
 
-const receiptStatusSuccessful = "0x1"
+const receiptStatusSuccessful = 1
 
 type TxReceipt struct {
 	TxHash    string `json:"transactionHash"`
 	GasUsed   string `json:"gasUsed"`
 	BlockHash string `json:"blockHash"`
-	Status    string `json:"status"`
+	Status    int    `json:"status"`
 }
 
 func (r *TxReceipt) Confirmed() bool {
