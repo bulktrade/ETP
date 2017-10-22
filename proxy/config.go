@@ -69,3 +69,9 @@ type Upstream struct {
 	Url     string `json:"url"`
 	Timeout string `json:"timeout"`
 }
+
+type StratumUpstream struct {
+	Name    string `json:"name"`
+	Url     string `json:"url"`
+	Timeout string `json:"timeout"`
+}
