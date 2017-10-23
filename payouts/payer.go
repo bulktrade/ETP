@@ -10,9 +10,9 @@ import (
 
 	"github.com/ethereum/go-ethereum/common/hexutil"
 
-	"github.com/sammy007/open-ethereum-pool/rpc"
-	"github.com/sammy007/open-ethereum-pool/storage"
-	"github.com/sammy007/open-ethereum-pool/util"
+	"github.com/bulktrade/ETP/rpc"
+	"github.com/bulktrade/ETP/storage"
+	"github.com/bulktrade/ETP/util"
 )
 
 const txCheckInterval = 5 * time.Second

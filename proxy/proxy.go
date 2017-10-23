@@ -13,10 +13,10 @@ import (
 
 	"github.com/gorilla/mux"
 
-	"github.com/sammy007/open-ethereum-pool/policy"
-	"github.com/sammy007/open-ethereum-pool/rpc"
-	"github.com/sammy007/open-ethereum-pool/storage"
-	"github.com/sammy007/open-ethereum-pool/util"
+	"github.com/bulktrade/ETP/policy"
+	"github.com/bulktrade/ETP/rpc"
+	"github.com/bulktrade/ETP/storage"
+	"github.com/bulktrade/ETP/util"
 )
 
 type ProxyServer struct {
