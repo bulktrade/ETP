@@ -71,6 +71,7 @@ type Upstream struct {
 }
 
 type StratumUpstream struct {
+	Enabled bool   `json:"enabled"`
 	Name    string `json:"name"`
 	Url     string `json:"url"`
 	Timeout string `json:"timeout"`
